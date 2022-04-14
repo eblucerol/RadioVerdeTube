@@ -3,7 +3,7 @@ import sys
 from os import system, listdir
 from PyQt5 import sip
 from PyQt5.QtWidgets import QApplication, QDialog, QFileDialog
-from RadioVerdeTubeGui import Ui_radioVerdeGui
+from GUI.RadioVerdeTubeGui import Ui_radioVerdeGui
 from pytube import YouTube
 from os import remove
 from time import sleep
@@ -17,9 +17,10 @@ class TubeDownloadApp(QDialog):
         self.ui.setupUi(self)
         self.createDir()
         
+        self.ui.pushSelectDir.setDefault(True)
         self.ui.pushDownload.setEnabled(False)
         self.ui.pushOpen.setEnabled(False)
-        self.ui.pushselectDir.clicked.connect(self.selectDir)
+        self.ui.pushSelectDir.clicked.connect(self.selectDir)
         self.ui.pushDownload.clicked.connect(self.downLoadAudio)
         self.ui.pushOpen.clicked.connect(self.openFile)
         self.ui.pushClear.clicked.connect(self.blockButton)
@@ -34,7 +35,7 @@ class TubeDownloadApp(QDialog):
     def blockButton(self):
         self.ui.pushOpen.setEnabled(False)
         self.ui.pushDownload.setEnabled(False)
-        self.ui.pushselectDir.setDefault(True)
+        self.ui.pushSelectDir.setDefault(True)
 
     def selectDir(self):
         url = self.ui.lineUrlVideo.text()
@@ -86,8 +87,6 @@ class TubeDownloadApp(QDialog):
         dir = dir.replace('/','\\')
         system('start %windir%\explorer.exe '+ dir)
         print(dir)
-
-        
 
 if __name__ == '__main__':
         app = QApplication(sys.argv)
