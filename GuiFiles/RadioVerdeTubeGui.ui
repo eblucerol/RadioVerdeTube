@@ -141,7 +141,7 @@ border-radius:20px;
             <string/>
            </property>
            <property name="pixmap">
-            <pixmap>media/radTub.svg</pixmap>
+            <pixmap>../media/radTub.svg</pixmap>
            </property>
            <property name="scaledContents">
             <bool>true</bool>
@@ -201,7 +201,7 @@ color:rgb(20,200,220);</string>
            </property>
            <property name="icon">
             <iconset>
-             <normaloff>media/minimizar.svg</normaloff>media/minimizar.svg</iconset>
+             <normaloff>../media/minimizar.svg</normaloff>../media/minimizar.svg</iconset>
            </property>
            <property name="iconSize">
             <size>
@@ -227,7 +227,7 @@ color:rgb(20,200,220);</string>
            </property>
            <property name="icon">
             <iconset>
-             <normaloff>media/cerrar.svg</normaloff>media/cerrar.svg</iconset>
+             <normaloff>../media/cerrar.svg</normaloff>../media/cerrar.svg</iconset>
            </property>
            <property name="iconSize">
             <size>
@@ -555,7 +555,7 @@ background-color:rgb(53,53,79);
         <property name="frameShadow">
          <enum>QFrame::Raised</enum>
         </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="8,0">
          <property name="spacing">
           <number>0</number>
          </property>
@@ -647,29 +647,21 @@ font: 75 9pt &quot;Nirmala UI&quot;;</string>
            <property name="frameShadow">
             <enum>QFrame::Raised</enum>
            </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_4">
+           <layout class="QVBoxLayout" name="verticalLayout_9">
             <item>
-             <widget class="QLabel" name="label_logo">
-              <property name="minimumSize">
-               <size>
-                <width>40</width>
-                <height>40</height>
-               </size>
+             <widget class="QProgressBar" name="progressBar">
+              <property name="styleSheet">
+               <string notr="true">font: 75 8pt &quot;MS Shell Dlg 2&quot;;
+color:rgb(0, 170, 255);</string>
               </property>
-              <property name="maximumSize">
-               <size>
-                <width>250</width>
-                <height>250</height>
-               </size>
+              <property name="maximum">
+               <number>100</number>
               </property>
-              <property name="text">
-               <string/>
+              <property name="value">
+               <number>0</number>
               </property>
-              <property name="pixmap">
-               <pixmap>media/radTub.svg</pixmap>
-              </property>
-              <property name="scaledContents">
-               <bool>true</bool>
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
               </property>
              </widget>
             </item>
@@ -763,6 +755,22 @@ font: 75 9pt &quot;Nirmala UI&quot;;</string>
     <hint type="destinationlabel">
      <x>389</x>
      <y>196</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushClear</sender>
+   <signal>clicked()</signal>
+   <receiver>progressBar</receiver>
+   <slot>reset()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>344</x>
+     <y>233</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>413</x>
+     <y>302</y>
     </hint>
    </hints>
   </connection>

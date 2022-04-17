@@ -1,95 +1,107 @@
-# Llamado a las herramientas básica
 import sys
-from os import system, listdir
-from PyQt5 import sip
 from PyQt5.QtWidgets import QApplication, QDialog, QFileDialog
-from GUI.RadioVerdeTubeGui import Ui_radioVerdeGui
-from pytube import YouTube
-from os import remove
-from time import sleep
-import ffmpeg
+from PyQt5 import QtCore, QtWidgets
+from PyQt5.uic import loadUi
+import pafy, threading, ffmpeg
+from os import remove, system
 
-# Definición de la clase principal de la aplicación
-class TubeDownloadApp(QDialog):
+
+class DownloadTubeApp(QDialog):
     def __init__(self):
         super().__init__()
-        self.ui = Ui_radioVerdeGui()
-        self.ui.setupUi(self)
-        self.createDir()
-        
-        self.ui.pushSelectDir.setDefault(True)
-        self.ui.pushDownload.setEnabled(False)
-        self.ui.pushOpen.setEnabled(False)
-        self.ui.pushSelectDir.clicked.connect(self.selectDir)
-        self.ui.pushDownload.clicked.connect(self.downLoadAudio)
-        self.ui.pushOpen.clicked.connect(self.openFile)
-        self.ui.pushClear.clicked.connect(self.blockButton)
+        loadUi('./GuiFiles/RadioVerdeTubeGui.ui',self)
 
-    def createDir(self):
-        try:
-            listdir().index('dir')
-        except:
-            f = open('dir','w')
-            f.close()
+        # Estado inicial de los botones
+        self.pushDownload.setEnabled(False) # Desabilitado
+        self.pushOpen.setEnabled(False)     # Desabilitado
+        self.pushSelectDir.setDefault(True) # Foco principal
 
-    def blockButton(self):
-        self.ui.pushOpen.setEnabled(False)
-        self.ui.pushDownload.setEnabled(False)
-        self.ui.pushSelectDir.setDefault(True)
+        # Objeto Pafy
+        self.audio = None
 
-    def selectDir(self):
-        url = self.ui.lineUrlVideo.text()
-        name = self.ui.lineNameFile.text()
-        artist = self.ui.lineArtist.text()
+        # Inicialización datos de entrada
+        self.url = ''; self.name = ''; self.artist = ''; self.format = ''
+        self.dir = ''; self.cont = 0
 
-        if all((url,name,artist)):
-            dir = QFileDialog.getExistingDirectory()
-            self.writeDir(dir)
-            try:
-                self.yt = YouTube(url)
-                self.ui.pushDownload.setEnabled(True)
-            except:
-                print('mala url')
-        else:
-            self.ui.pushDownload.setEnabled(False)
-            self.ui.pushOpen.setEnabled(False)
-
+        # Acción para recetear los botones
+        self.pushClear.clicked.connect(self.reset)
+        # Acción para abrir la carpeta de destino
+        self.pushOpen.clicked.connect(self.openFolder)
+        # Acción Para seleccionar la carpeta de destino
+        self.pushSelectDir.clicked.connect(self.selecDir)
+        # Acción para descargar el audio
+        self.pushDownload.clicked.connect(self.downloadAudio)
+        # Eliminar barra de títtulo
+        self.setWindowFlag(QtCore.Qt.FramelessWindowHint)
+        # Mover ventana
+        self.frame_superior.mouseMoveEvent = self.moveWindow
     
-    def writeDir(self, directory):
-        f = open('dir','w')
-        f.write(directory)
-        f.close()
-    
-    def readDir(self):
-        f = open('dir','r')
-        dir = f.read()
-        f.close()
-        return dir
-    
-    def downLoadAudio(self):
-        dir = self.readDir()
-        dir = dir.replace('/','\\')
-        name = self.ui.lineNameFile.text()
-        artist = self.ui.lineArtist.text()
-        formt = self.ui.comboFormat.currentText()
-        try:
-            stream = self.yt.streams.filter(only_audio=True).order_by('abr').desc().first().download(output_path=dir, filename='file.webm')
-            conv = ffmpeg.input(stream)
-            conv = ffmpeg.output(conv, dir+'/'+name+formt,**{'metadata:':'artist='+artist,'metadata':'title='+name})
-            ffmpeg.run(conv)
-            remove(stream)
-            self.ui.pushOpen.setEnabled(True)
-        except:
-            self.ui.pushDownload.setEnabled(False)
-    
-    def openFile(self):
-        dir = self.readDir()
-        dir = dir.replace('/','\\')
+    # Abrir la carpeta de destino
+    def openFolder(self):
+        dir = self.dir.replace('/', '\\')
         system('start %windir%\explorer.exe '+ dir)
-        print(dir)
+
+    # Ejecuta la descarga del audio
+    def callAudio(self, total,recvd,ratio,rate,eta):
+        self.cont = ratio*100
+        self.progressBar.setValue(self.cont)
+
+    def downloadAudio(self):
+        try:
+            # Inicio de descarga
+            self.audio = pafy.new(self.url).getbestaudio()
+            self.audio.download(filepath='./temp/file', quiet=True, callback=self.callAudio)
+            self.pushOpen.setEnabled(True)
+            # Fin de descarga
+            # Inicio de conversion
+            stream = ffmpeg.input('./temp/file')
+            filename = self.dir+'/'+self.name+self.format
+            stream = ffmpeg.output(stream, filename, **{'metadata:':'artist='+self.artist,'metadata':'title='+self.name})
+            ffmpeg.run(stream, quiet=True)
+            remove('./temp/file')
+        except:
+            self.pushDownload.setEnabled(False)
+    
+    def downloadThread(self):
+        self.th = threading.Thread(target=self.downloadAudio)
+        self.th.start()
+
+    # Selecciona directorio de destino
+    def selecDir(self):
+        if self.isCompleteData():
+            self.dir = QFileDialog.getExistingDirectory()
+            self.pushDownload.setEnabled(True)
+        else:
+            pass
+
+    # Guardar los datos de los Inputs
+    def recordInputs(self):    
+        self.url = self.lineUrlVideo.text()
+        self.name = self.lineNameFile.text()
+        self.artist = self.lineArtist.text()
+        self.format = self.comboFormat.currentText()
+    
+    # Validar si el formulario está completo
+    def isCompleteData(self):
+        self.recordInputs()
+        return all([self.url,self.name,self.artist])
+
+    # Modulos mover ventana
+    def mousePressEvent(self, event):
+        self.clickPosition = event.globalPos()
+    
+    def moveWindow(self, event):
+        if self.isMaximized() == False:
+            self.move(self.pos() + event.globalPos() - self.clickPosition)
+            self.clickPosition = event.globalPos()
+    
+    def reset(self):
+        self.pushOpen.setEnabled(False)
+        self.pushDownload.setEnabled(False)
+
 
 if __name__ == '__main__':
         app = QApplication(sys.argv)
-        win = TubeDownloadApp()
+        win = DownloadTubeApp()
         win.show()
         sys.exit(app.exec_())
