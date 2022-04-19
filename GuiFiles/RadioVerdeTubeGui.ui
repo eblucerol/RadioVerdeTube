@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>RadioVerdeTube</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
@@ -184,6 +184,29 @@ color:rgb(20,200,220);</string>
             </size>
            </property>
           </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnInfo">
+           <property name="minimumSize">
+            <size>
+             <width>40</width>
+             <height>40</height>
+            </size>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>../media/info.svg</normaloff>../media/info.svg</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>38</width>
+             <height>38</height>
+            </size>
+           </property>
+          </widget>
          </item>
          <item>
           <widget class="QPushButton" name="btn_min">
@@ -649,19 +672,27 @@ font: 75 9pt &quot;Nirmala UI&quot;;</string>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_9">
             <item>
-             <widget class="QProgressBar" name="progressBar">
-              <property name="styleSheet">
-               <string notr="true">font: 75 8pt &quot;MS Shell Dlg 2&quot;;
-color:rgb(0, 170, 255);</string>
+             <widget class="QProgressBar" name="pbDownload">
+              <property name="minimumSize">
+               <size>
+                <width>50</width>
+                <height>0</height>
+               </size>
               </property>
-              <property name="maximum">
-               <number>100</number>
+              <property name="styleSheet">
+               <string notr="true"/>
               </property>
               <property name="value">
                <number>0</number>
               </property>
+              <property name="textVisible">
+               <bool>false</bool>
+              </property>
               <property name="orientation">
                <enum>Qt::Vertical</enum>
+              </property>
+              <property name="invertedAppearance">
+               <bool>false</bool>
               </property>
              </widget>
             </item>
@@ -737,8 +768,8 @@ color:rgb(0, 170, 255);</string>
      <y>230</y>
     </hint>
     <hint type="destinationlabel">
-     <x>374</x>
-     <y>150</y>
+     <x>387</x>
+     <y>144</y>
     </hint>
    </hints>
   </connection>
@@ -753,24 +784,8 @@ color:rgb(0, 170, 255);</string>
      <y>231</y>
     </hint>
     <hint type="destinationlabel">
-     <x>389</x>
-     <y>196</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushClear</sender>
-   <signal>clicked()</signal>
-   <receiver>progressBar</receiver>
-   <slot>reset()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>344</x>
-     <y>233</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>413</x>
-     <y>302</y>
+     <x>402</x>
+     <y>193</y>
     </hint>
    </hints>
   </connection>

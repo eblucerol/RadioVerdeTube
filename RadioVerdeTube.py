@@ -2,14 +2,50 @@ import sys
 from PyQt5.QtWidgets import QApplication, QDialog, QFileDialog
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.uic import loadUi
-import pafy, threading, ffmpeg
-from os import remove, system
+from PyQt5.QtCore import QThread, pyqtSignal
+import pafy, ffmpeg
+from os import remove, system, listdir
 
+class Worker(QThread):
+    sig = pyqtSignal(float)
+
+    def __init__(self,audio,metadata):
+        super().__init__()
+        self.ratio = 0#int(ratio * 100)
+        self.audio = audio
+        self.filename,self.artist,self.name = metadata
+    
+    def callAudio(self, total,recvd,ratio,rate,eta):
+        self.sig.emit(ratio)
+        print(ratio)
+
+    def downloadAudio(self):
+        try:
+            self.audio.download(filepath='./temp/file', quiet=True, callback=self.callAudio)
+            stream = ffmpeg.input('./temp/file')
+            stream = ffmpeg.output(stream, self.filename, **{'metadata:':'artist='+self.artist,'metadata':'title='+self.name})
+            ffmpeg.run(stream, quiet=True)
+            remove('./temp/file')
+        except:
+            print('Error')
+
+    def run(self):
+        self.downloadAudio()
+        self.sig.emit(12.5)
+
+class InfoWind(QDialog):
+    def __init__(self):
+        super().__init__()
+        loadUi('./GuiFiles/info.ui',self)
+        self.setWindowFlag(QtCore.Qt.FramelessWindowHint)
 
 class DownloadTubeApp(QDialog):
     def __init__(self):
         super().__init__()
         loadUi('./GuiFiles/RadioVerdeTubeGui.ui',self)
+
+        # Limpia la carpeta temp de reciduos de anteriores descargas
+        self.clearTemp()
 
         # Estado inicial de los botones
         self.pushDownload.setEnabled(False) # Desabilitado
@@ -21,7 +57,7 @@ class DownloadTubeApp(QDialog):
 
         # Inicialización datos de entrada
         self.url = ''; self.name = ''; self.artist = ''; self.format = ''
-        self.dir = ''; self.cont = 0
+        self.dir = ''
 
         # Acción para recetear los botones
         self.pushClear.clicked.connect(self.reset)
@@ -35,6 +71,10 @@ class DownloadTubeApp(QDialog):
         self.setWindowFlag(QtCore.Qt.FramelessWindowHint)
         # Mover ventana
         self.frame_superior.mouseMoveEvent = self.moveWindow
+
+        # Ventana de información
+        self.infowin = InfoWind()
+        self.btnInfo.clicked.connect(self.infowin.show)
     
     # Abrir la carpeta de destino
     def openFolder(self):
@@ -43,28 +83,26 @@ class DownloadTubeApp(QDialog):
 
     # Ejecuta la descarga del audio
     def callAudio(self, total,recvd,ratio,rate,eta):
-        self.cont = ratio*100
-        self.progressBar.setValue(self.cont)
+        print(ratio)
 
     def downloadAudio(self):
         try:
-            # Inicio de descarga
-            self.audio = pafy.new(self.url).getbestaudio()
-            self.audio.download(filepath='./temp/file', quiet=True, callback=self.callAudio)
-            self.pushOpen.setEnabled(True)
-            # Fin de descarga
-            # Inicio de conversion
-            stream = ffmpeg.input('./temp/file')
             filename = self.dir+'/'+self.name+self.format
-            stream = ffmpeg.output(stream, filename, **{'metadata:':'artist='+self.artist,'metadata':'title='+self.name})
-            ffmpeg.run(stream, quiet=True)
-            remove('./temp/file')
+            metadata = (filename,self.artist,self.name)
+            # # Inicio de descarga y conversion
+            self.audio = pafy.new(self.url).getbestaudio()
+            self.th = Worker(self.audio,metadata)
+            self.th.sig.connect(self.updateProgressBar)
+            self.th.start()
+            self.setEnabled(False)
         except:
             self.pushDownload.setEnabled(False)
     
-    def downloadThread(self):
-        self.th = threading.Thread(target=self.downloadAudio)
-        self.th.start()
+    def updateProgressBar(self, d):
+        self.pbDownload.setValue(int(d*100))
+        if d == 12.5:
+            self.setEnabled(True)
+            self.pushOpen.setEnabled(True)
 
     # Selecciona directorio de destino
     def selecDir(self):
@@ -95,13 +133,21 @@ class DownloadTubeApp(QDialog):
             self.move(self.pos() + event.globalPos() - self.clickPosition)
             self.clickPosition = event.globalPos()
     
+    # Reinicia todo el control
     def reset(self):
+        self.clearTemp()
         self.pushOpen.setEnabled(False)
         self.pushDownload.setEnabled(False)
-
+        self.pbDownload.reset()
+    
+    # Borra contenido temporal
+    def clearTemp(self):
+        listFiles = listdir('./temp')
+        for f in listFiles:
+            remove('./temp/'+f)
 
 if __name__ == '__main__':
-        app = QApplication(sys.argv)
-        win = DownloadTubeApp()
-        win.show()
-        sys.exit(app.exec_())
+    app = QApplication(sys.argv)
+    win = DownloadTubeApp()
+    win.show()
+    sys.exit(app.exec_())
