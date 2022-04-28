@@ -87,9 +87,12 @@ class DownloadTubeApp(QDialog):
 
     def downloadAudio(self):
         try:
+            # Borrar carpeta temporal
+            self.clearTemp()
+
             filename = self.dir+'/'+self.name+self.format
             metadata = (filename,self.artist,self.name)
-            # # Inicio de descarga y conversion
+            # Inicio de descarga y conversion
             self.audio = pafy.new(self.url).getbestaudio()
             self.th = Worker(self.audio,metadata)
             self.th.sig.connect(self.updateProgressBar)
@@ -106,8 +109,9 @@ class DownloadTubeApp(QDialog):
 
     # Selecciona directorio de destino
     def selecDir(self):
+        self.clearTemp()
         if self.isCompleteData():
-            self.dir = QFileDialog.getExistingDirectory()
+            self.dir = QFileDialog.getExistingDirectory(directory='../')
             self.pushDownload.setEnabled(True)
         else:
             pass
